@@ -11,6 +11,8 @@ const {
   fetchAllIncome,
 } = require("../services/incomeService");
 const { fetchSourceById } = require("../services/sourceService");
+const { updateBudgetAmount } = require("../services/budgetService");
+const { getCollections } = require("../utils/handleCollection");
 
 exports.getIncome = tryCatch(async (req, res) => {
   const incomeCollection = await getDB("expense").collection("income");
@@ -24,7 +26,8 @@ exports.setIncome = tryCatch(async (req, res) => {
   const incomeCollection = await getDB("expense").collection("income");
   const userCollection = await getDB("expense").collection("user");
   const sourceCollection = await getDB("expense").collection("source");
-  const { title, amount, sourceId, date, currency } = req.body;
+  const { title, amount, sourceId, date, currency, selectedBudgetId } =
+    req.body;
   const userId = req.userId;
 
   await fetchUserById(userCollection, userId);
@@ -49,7 +52,29 @@ exports.setIncome = tryCatch(async (req, res) => {
     userId: new ObjectId(userId),
   };
 
+  const budget = await getBudgetForIncome(selectedBudgetId, sourceId, userId);
+
+  if (budget && budget.amount + amount > budget.limit) {
+    req.emitExpenseNotification(
+      userId,
+      "Expense amount exceeds the budget limit"
+    );
+    throw new BadRequest("Expense amount exceeds the budget limit");
+  }
+
   await incomeCollection.insertOne(income);
+
+  if (selectedBudgetId) {
+    await updateBudgetAmount(
+      selectedBudgetId,
+      sourceId,
+      userId,
+      inComeDate,
+      false
+    );
+  } else {
+    await updateBudgetAmount(null, sourceId, userId, inComeDate, false);
+  }
 
   const response = {
     amount,
@@ -63,6 +88,24 @@ exports.setIncome = tryCatch(async (req, res) => {
     .status(201)
     .json({ message: "Income created successfully", income: response });
 });
+
+const getBudgetForIncome = async (selectedBudgetId, sourceId, userId) => {
+  const { budgetCollection } = await getCollections();
+
+  if (selectedBudgetId) {
+    return await budgetCollection.findOne({
+      _id: new ObjectId(selectedBudgetId),
+      userId: new ObjectId(userId),
+      budgetType: "income",
+    });
+  } else {
+    return await budgetCollection.findOne({
+      userId: new ObjectId(userId),
+      categoryOrSourceId: new ObjectId(sourceId),
+      budgetType: "income",
+    });
+  }
+};
 
 exports.modifyIncome = tryCatch(async (req, res) => {
   const incomeCollection = await getDB("expense").collection("income");

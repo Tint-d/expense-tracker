@@ -1,5 +1,6 @@
 const { ObjectId } = require("mongodb");
 const { NotFound } = require("../utils/AppError");
+const { getCollections } = require("../utils/handleCollection");
 
 const fetchIncomeById = async (collection, id) => {
   const existIncome = await collection.findOne({
@@ -54,4 +55,27 @@ const fetchAllIncome = async (income, id) => {
   return result;
 };
 
-module.exports = { fetchIncomeById, fetchIncomeByUserId, fetchAllIncome };
+const getIncomeBudget = async (selectedBudgetId, categoryId, userId) => {
+  const { budgetCollection } = await getCollections();
+
+  if (selectedBudgetId) {
+    return await budgetCollection.findOne({
+      _id: new ObjectId(selectedBudgetId),
+      userId: new ObjectId(userId),
+      budgetType: "income",
+    });
+  } else {
+    return await budgetCollection.findOne({
+      userId: new ObjectId(userId),
+      categoryOrSourceId: new ObjectId(categoryId),
+      budgetType: "income",
+    });
+  }
+};
+
+module.exports = {
+  fetchIncomeById,
+  fetchIncomeByUserId,
+  fetchAllIncome,
+  getIncomeBudget,
+};

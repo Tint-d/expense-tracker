@@ -35,10 +35,20 @@ function formatDate(inputDate) {
     : moment().format("DD-MM-YYYY");
 }
 
+const isValidFrequency = (frequency) => {
+  if (!frequency || frequency === "") {
+    return true;
+  }
+  const allowedFrequency = ["Daily", "Weekly", "Monthly", "Yearly"];
+
+  return allowedFrequency.includes(frequency);
+};
+
 module.exports = {
   isValidCurrency,
   formatDateWithMoment,
   isValidType,
   formatDate,
   validateType,
+  isValidFrequency,
 };

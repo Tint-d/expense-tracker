@@ -1,9 +1,7 @@
 require("dotenv").config();
-const express = require("express");
 const { getDB } = require("../db/db");
 const { tryCatch } = require("../utils/tryCatch");
-const { BadRequest, NotFound } = require("../utils/AppError");
-const { ObjectId } = require("mongodb");
+const { BadRequest } = require("../utils/AppError");
 const bcrypt = require("bcrypt");
 var jwt = require("jsonwebtoken");
 
@@ -33,8 +31,6 @@ exports.register = tryCatch(async (req, res) => {
   const result = await collection.insertOne(newUser);
   res.status(200).json({ message: "Register Successfully", data: result });
 });
-
-// login =>
 
 exports.login = tryCatch(async (req, res) => {
   const db = getDB();

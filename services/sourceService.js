@@ -5,9 +5,10 @@ const fetchSourceById = async (collection, id) => {
   const existSource = await collection.findOne({
     _id: new ObjectId(id),
   });
+  console.log(existSource);
 
   if (!existSource) {
-    throw new NotFound("Category does not exist!");
+    throw new NotFound("Source does not exist!");
   }
   return existSource;
 };
