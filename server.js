@@ -12,6 +12,7 @@ const incomeRouter = require("./routes/incomeRoute");
 const socketMiddleware = require("./middleware/socketMiddleware");
 const budgetRouter = require("./routes/budgetRoute");
 const recurringRouter = require("./routes/recurringRoute");
+const reportRouter = require("./routes/reportRoute");
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ connectDB()
     app.use("/api/v1/income", incomeRouter);
     app.use("/api/v1/budget", budgetRouter);
     app.use("/api/v1/recurring", recurringRouter);
+    app.use("/api/v1/report", reportRouter);
 
     app.use(notFound);
     app.use(errorHandler);

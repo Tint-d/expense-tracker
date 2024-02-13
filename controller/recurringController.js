@@ -48,7 +48,8 @@ exports.setRecurring = tryCatch(async (req, res) => {
 
   const categoryOrSource = await validCategoryOrSource(
     recurType,
-    categoryOrSourceId
+    categoryOrSourceId,
+    null
   );
   const recurringStartDate = startDate
     ? formatDateWithMoment(startDate)
@@ -83,7 +84,7 @@ exports.setRecurring = tryCatch(async (req, res) => {
 
   await recurringCollection.insertOne(newRecur);
 
-  await handleRecurring(frequency, startDate, endDate);
+  await handleRecurring(frequency, startDate, endDate, true);
 
   const response = {
     title,
@@ -189,10 +190,10 @@ exports.pauseRecurring = tryCatch(async (req, res) => {
   );
 
   if (!updatedRecur) {
-    throw new NotFound({ message: "Recurring expense not found" });
+    throw new NotFound({ message: "Recurring item not found" });
   }
 
-  res.status(200).json({ message: "Recurring expense paused successfully" });
+  res.status(200).json({ message: "Recurring item paused successfully" });
 });
 
 exports.resumeRecurring = tryCatch(async (req, res) => {
@@ -204,19 +205,19 @@ exports.resumeRecurring = tryCatch(async (req, res) => {
     { $set: { paused: false } }
   );
 
-  const recurringExpense = await recurringCollection.findOne({
+  const recurringItem = await recurringCollection.findOne({
     _id: new ObjectId(recurringId),
   });
 
-  if (!recurringExpense) {
+  if (!recurringItem) {
     throw new NotFound({ message: "Recurring expense not found" });
   }
 
-  if (!recurringExpense.paused) {
+  if (!recurringItem.paused) {
     await handleRecurring(
-      recurringExpense.frequency,
-      recurringExpense.startDate,
-      recurringExpense.endDate
+      recurringItem.frequency,
+      recurringItem.startDate,
+      recurringItem.endDate
     );
   }
 

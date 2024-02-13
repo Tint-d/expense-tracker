@@ -22,12 +22,13 @@ const validCategoryOrSource = async (
 ) => {
   const { categoryCollection, sourceCollection } = await getCollections();
   let categoryOrSource;
-  if (recurType || existRecurType === "expense") {
+
+  if (recurType === "expense" || existRecurType === "expense") {
     categoryOrSource = await fetchCategoryById(
       categoryCollection,
       categoryOrSourceId
     );
-  } else {
+  } else if (recurType === "income") {
     categoryOrSource = await fetchSourceById(
       sourceCollection,
       categoryOrSourceId
@@ -40,13 +41,13 @@ const validCategoryOrSource = async (
   return categoryOrSource;
 };
 
-const addRecurringExpenses = async (recurringExpense) => {
+const addRecurringExpenses = async (recurringExpense, isExpense) => {
   try {
     if (recurringExpense.paused === true) {
       return;
     }
 
-    const { expenseCollection } = await getCollections();
+    const { expenseCollection, incomeCollection } = await getCollections();
     const currentDate = moment().format("DD-MM-YYYY");
 
     if (
@@ -72,15 +73,29 @@ const addRecurringExpenses = async (recurringExpense) => {
         date: currentDate,
         notes: description,
       };
-
-      await expenseCollection.insertOne(newExpense);
+      const newIncome = {
+        title,
+        amount,
+        currency,
+        userId,
+        sourceId: categoryOrSourceId,
+        date: currentDate,
+        notes: description,
+      };
+      if (isExpense) {
+        console.log("in exepnse");
+        await expenseCollection.insertOne(newExpense);
+      } else {
+        console.log("in income");
+        await incomeCollection.insertOne(newIncome);
+      }
     }
   } catch (error) {
     console.error("Error adding recurring expenses:", error);
   }
 };
 
-const handleRecurring = async (frequency, startDate, endDate) => {
+const handleRecurring = async (frequency, startDate, endDate, isExpense) => {
   const currentDate = moment();
   const startMoment = moment(startDate, "DD-MM-YYYY");
 
@@ -115,12 +130,12 @@ const handleRecurring = async (frequency, startDate, endDate) => {
               recurringExpense.paused === false
             ) {
               console.log("after pause change", recurringExpense.paused);
-              await addRecurringExpenses(recurringExpense);
+              await addRecurringExpenses(recurringExpense, false);
             } else {
               clearInterval(recurringInterval);
             }
-          }, dailyInterval);
-        }, timeUntilNextDay);
+          }, 3000);
+        }, 2000);
       } else {
         throw new BadRequest("Start date is in the past");
       }
